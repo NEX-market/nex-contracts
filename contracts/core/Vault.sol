@@ -68,7 +68,6 @@ contract Vault is ReentrancyGuard, IVault {
     uint256 public override totalTokenWeights;
 
     bool public includeAmmPrice = true;
-    bool public useSwapPricing = false;
 
     bool public override inManagerMode = false;
     bool public override inPrivateLiquidationMode = false;
@@ -421,7 +420,6 @@ contract Vault is ReentrancyGuard, IVault {
     function buy(address _token, address _receiver) external override nonReentrant returns (uint256) {
         _validateManager();
         _validate(whitelistedTokens[_token], 16);
-        useSwapPricing = true;
 
         uint256 tokenAmount = _transferIn(_token);
         _validate(tokenAmount > 0, 17);
@@ -430,8 +428,7 @@ contract Vault is ReentrancyGuard, IVault {
 
         uint256 price = getMinPrice(_token);
 
-        uint256 usdAmount = tokenAmount.mul(price).div(PRICE_PRECISION);
-        usdAmount = usdAmount.mul(PRICE_PRECISION).div(10 ** tokenDecimals[_token]);
+        uint256 usdAmount = tokenAmount.mul(price).div(10 ** tokenDecimals[_token]);
         _validate(usdAmount > 0, 18);
 
         uint256 feeBasisPoints = vaultUtils.getBuyUsdFeeBasisPoints(_token, usdAmount);
@@ -443,14 +440,12 @@ contract Vault is ReentrancyGuard, IVault {
 
         emit Buy(_receiver, _token, tokenAmount, mintAmount, feeBasisPoints);
 
-        useSwapPricing = false;
         return mintAmount;
     }
 
     function sell(address _token, address _receiver, uint256 _usdAmount) external override nonReentrant returns (uint256) {
         _validateManager();
         _validate(whitelistedTokens[_token], 19);
-        useSwapPricing = true;
 
         updateCumulativeFundingRate(_token, _token);
 
@@ -467,7 +462,6 @@ contract Vault is ReentrancyGuard, IVault {
 
         emit Sell(_receiver, _token, _usdAmount, amountOut, feeBasisPoints);
 
-        useSwapPricing = false;
         return amountOut;
     }
 
@@ -476,8 +470,6 @@ contract Vault is ReentrancyGuard, IVault {
         _validate(whitelistedTokens[_tokenIn], 24);
         _validate(whitelistedTokens[_tokenOut], 25);
         _validate(_tokenIn != _tokenOut, 26);
-
-        useSwapPricing = true;
 
         updateCumulativeFundingRate(_tokenIn, _tokenIn);
         updateCumulativeFundingRate(_tokenOut, _tokenOut);
@@ -507,7 +499,6 @@ contract Vault is ReentrancyGuard, IVault {
 
         emit Swap(_receiver, _tokenIn, _tokenOut, amountIn, amountOut, amountOutAfterFees, feeBasisPoints);
 
-        useSwapPricing = false;
         return amountOutAfterFees;
     }
 

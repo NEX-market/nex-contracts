@@ -324,8 +324,8 @@ contract VaultPriceFeed is IVaultPriceFeed {
         if (_token == eth) {
             uint256 price0 = getPairPrice(ethNear, true);
             uint256 price1 = getPairPrice(nearUsdc, true);
-            // this calculation could overflow if (price0 / 10**30) * (price1 / 10**30) is more than 10**17
-            return price0.mul(price1).div(PRICE_PRECISION);
+            
+            return price0.div(PRICE_PRECISION).mul(price1);
         }
 
         return 0;

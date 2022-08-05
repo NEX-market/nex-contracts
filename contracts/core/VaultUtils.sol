@@ -24,7 +24,7 @@ contract VaultUtils is IVaultUtils, Governable {
     }
 
     IVault public vault;
-    INitManager public nitManager;
+    INitManager public immutable nitManager;
 
     uint256 public constant BASIS_POINTS_DIVISOR = 10000;
     uint256 public constant FUNDING_RATE_PRECISION = 1000000;
