@@ -24,7 +24,6 @@ interface IVault {
     function totalTokenWeights() external view returns (uint256);
     function getTargetUsdAmount(address _token) external view returns (uint256);
 
-    function inManagerMode() external view returns (bool);
     function inPrivateLiquidationMode() external view returns (bool);
 
     function maxGasPrice() external view returns (uint256);
@@ -38,12 +37,12 @@ interface IVault {
     function lastFundingTimes(address _token) external view returns (uint256);
 
     function setMaxLeverage(uint256 _maxLeverage) external;
-    function setInManagerMode(bool _inManagerMode) external;
     function setManager(address _manager, bool _isManager) external;
     function setIsSwapEnabled(bool _isSwapEnabled) external;
     function setIsLeverageEnabled(bool _isLeverageEnabled) external;
     function setMaxGasPrice(uint256 _maxGasPrice) external;
     function setBufferAmount(address _token, uint256 _amount) external;
+    function setMaxUsdAmount(address _token, uint256 _amount) external;
     function setMaxGlobalShortSize(address _token, uint256 _amount) external;
     function setInPrivateLiquidationMode(bool _inPrivateLiquidationMode) external;
     function setLiquidator(address _liquidator, bool _isActive) external;
@@ -113,6 +112,7 @@ interface IVault {
     function guaranteedUsd(address _token) external view returns (uint256);
     function poolAmounts(address _token) external view returns (uint256);
     function bufferAmounts(address _token) external view returns (uint256);
+    function maxUsdAmounts(address _token) external view returns (uint256);
     function reservedAmounts(address _token) external view returns (uint256);
     function getRedemptionAmount(address _token, uint256 _usdAmount) external view returns (uint256);
     function getMaxPrice(address _token) external view returns (uint256);

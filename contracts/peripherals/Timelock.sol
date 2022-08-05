@@ -258,7 +258,8 @@ contract Timelock is ITimelock {
         address _token,
         uint256 _tokenWeight,
         uint256 _minProfitBps,
-        uint256 _bufferAmount
+        uint256 _bufferAmount,
+        uint256 _maxUsdAmount
     ) external onlyAdminOrHandler {
         require(_minProfitBps <= 500, "Timelock: invalid _minProfitBps");
 
@@ -279,6 +280,7 @@ contract Timelock is ITimelock {
         );
 
         IVault(_vault).setBufferAmount(_token, _bufferAmount);
+        IVault(_vault).setMaxUsdAmount(_token, _maxUsdAmount);
     }
 
     function setMaxGlobalShortSize(address _vault, address _token, uint256 _amount) external onlyAdmin {
@@ -365,6 +367,10 @@ contract Timelock is ITimelock {
 
     function setLiquidator(address _vault, address _liquidator, bool _isActive) external onlyAdmin {
         IVault(_vault).setLiquidator(_liquidator, _isActive);
+    }
+
+    function setManager(address _vault, address _manager, bool _isManager) external onlyAdmin {
+        IVault(_vault).setManager(_manager, _isManager);
     }
 
     function addExcludedToken(address _token) external onlyAdmin {

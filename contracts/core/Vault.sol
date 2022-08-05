@@ -69,7 +69,6 @@ contract Vault is ReentrancyGuard, IVault {
 
     bool public includeAmmPrice = true;
 
-    bool public override inManagerMode = false;
     bool public override inPrivateLiquidationMode = false;
 
     uint256 public override maxGasPrice;
@@ -102,6 +101,8 @@ contract Vault is ReentrancyGuard, IVault {
     // bufferAmounts allows specification of an amount to exclude from swaps
     // this can be used to ensure a certain amount of liquidity is available for leverage positions
     mapping (address => uint256) public override bufferAmounts;
+
+    mapping (address => uint256) public override maxUsdAmounts;
 
     // guaranteedUsd tracks the amount of USD that is "guaranteed" by opened leverage positions
     // this is an estimated amount, it is possible for the actual guaranteed value to be lower
@@ -241,11 +242,6 @@ contract Vault is ReentrancyGuard, IVault {
         return allWhitelistedTokens.length;
     }
 
-    function setInManagerMode(bool _inManagerMode) external override {
-        _onlyGov();
-        inManagerMode = _inManagerMode;
-    }
-
     function setManager(address _manager, bool _isManager) external override {
         _onlyGov();
         isManager[_manager] = _isManager;
@@ -295,6 +291,11 @@ contract Vault is ReentrancyGuard, IVault {
     function setBufferAmount(address _token, uint256 _amount) external override {
         _onlyGov();
         bufferAmounts[_token] = _amount;
+    }
+
+    function setMaxUsdAmount(address _token, uint256 _amount) external override {
+        _onlyGov();
+        maxUsdAmounts[_token] = _amount;
     }
 
     function setMaxGlobalShortSize(address _token, uint256 _amount) external override {
@@ -437,6 +438,7 @@ contract Vault is ReentrancyGuard, IVault {
         mintAmount = mintAmount.mul(PRICE_PRECISION).div(10 ** tokenDecimals[_token]);
 
         _increasePoolAmount(_token, amountAfterFees);
+        _validateMaxUsdAmount(_token);
 
         emit Buy(_receiver, _token, tokenAmount, mintAmount, feeBasisPoints);
 
@@ -493,6 +495,7 @@ contract Vault is ReentrancyGuard, IVault {
         _increasePoolAmount(_tokenIn, amountIn);
         _decreasePoolAmount(_tokenOut, amountOut);
 
+        _validateMaxUsdAmount(_tokenIn);
         _validateBufferAmount(_tokenOut);
 
         _transferOut(_tokenOut, amountOutAfterFees, _receiver);
@@ -1086,6 +1089,12 @@ contract Vault is ReentrancyGuard, IVault {
         }
     }
 
+    function _validateMaxUsdAmount(address _token) private view {
+        if (poolAmounts[_token] > maxUsdAmounts[_token]) {
+            revert("Vault: poolAmount > maxUsdAmount");
+        }
+    }
+
     function _increaseReservedAmount(address _token, uint256 _amount) private {
         reservedAmounts[_token] = reservedAmounts[_token].add(_amount);
         _validate(reservedAmounts[_token] <= poolAmounts[_token], 52);
@@ -1138,9 +1147,7 @@ contract Vault is ReentrancyGuard, IVault {
 
     // we have this validation as a function instead of a modifier to reduce contract size
     function _validateManager() private view {
-        if (inManagerMode) {
-            _validate(isManager[msg.sender], 54);
-        }
+        _validate(isManager[msg.sender], 54);
     }
 
     // we have this validation as a function instead of a modifier to reduce contract size
