@@ -6,6 +6,7 @@ import "./interfaces/IVaultPriceFeed.sol";
 import "../oracle/interfaces/IPriceFeed.sol";
 import "../oracle/interfaces/ISecondaryPriceFeed.sol";
 import "../amm/interfaces/ITrisolarisPair.sol";
+import "../amm/interfaces/IAmmOracle.sol";
 
 pragma solidity 0.8.11;
 
@@ -34,8 +35,9 @@ contract VaultPriceFeed is IVaultPriceFeed {
 
     address public near;
     address public eth;
-    address public nearUsdc;
-    address public ethNear;
+    
+    IAmmOracle public nearAmmOracle;
+    IAmmOracle public ethAmmOracle;
 
     mapping (address => address) public priceFeeds;
     mapping (address => uint256) public priceDecimals;
@@ -97,9 +99,12 @@ contract VaultPriceFeed is IVaultPriceFeed {
         eth = _eth;
     }
 
-    function setPairs(address _nearUsdc, address _ethNear) external onlyGov {
-        nearUsdc = _nearUsdc;
-        ethNear = _ethNear;
+    function setNearAmmOracle(IAmmOracle _nearAmmOracle) external onlyGov {
+        nearAmmOracle = _nearAmmOracle;
+    }
+
+    function setEthAmmOracle(IAmmOracle _ethAmmOracle) external onlyGov {
+        ethAmmOracle = _ethAmmOracle;
     }
 
     function setSpreadBasisPoints(address _token, uint256 _spreadBasisPoints) external override onlyGov {
@@ -316,16 +321,15 @@ contract VaultPriceFeed is IVaultPriceFeed {
         return ISecondaryPriceFeed(secondaryPriceFeed).getPrice(_token, _referencePrice, _maximise);
     }
 
+    // set isAmmEnabled to true to apply TWAP
+    // apply only if ETH/USDC, NEAR/USDC pairs have enough liquidities
     function getAmmPrice(address _token) public override view returns (uint256) {
         if (_token == near) {
-            return getPairPrice(nearUsdc, true);
+            return nearAmmOracle.consult(_token, 10 ** 18).mul(PRICE_PRECISION);
         }
 
         if (_token == eth) {
-            uint256 price0 = getPairPrice(ethNear, true);
-            uint256 price1 = getPairPrice(nearUsdc, true);
-            
-            return price0.div(PRICE_PRECISION).mul(price1);
+            return ethAmmOracle.consult(_token, 10 ** 12).mul(PRICE_PRECISION);
         }
 
         return 0;
