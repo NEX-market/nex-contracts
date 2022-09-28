@@ -54,11 +54,11 @@ contract StakedNit {
     }
 
     function balanceOf(address _account) external view returns (uint256) {
-        IRewardTracker(feeNitTracker).depositBalances(_account, nit);
+        return IRewardTracker(feeNitTracker).depositBalances(_account, nit);
     }
 
     function totalSupply() external view returns (uint256) {
-        IERC20(feeNitTracker).totalSupply();
+        return IERC20(feeNitTracker).totalSupply();
     }
 
     function _approve(address _owner, address _spender, uint256 _amount) private {
@@ -84,5 +84,4 @@ contract StakedNit {
         IRewardTracker(feeNitTracker).stakeForAccount(_sender, _recipient, nit, _amount);
     }
 
-    
 }
