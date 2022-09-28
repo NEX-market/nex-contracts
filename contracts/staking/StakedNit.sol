@@ -84,5 +84,4 @@ contract StakedNit {
         IRewardTracker(feeNitTracker).stakeForAccount(_sender, _recipient, nit, _amount);
     }
 
-    
 }
